@@ -1,0 +1,6 @@
+services:
+  crproxy:
+    image: ${DOCKER_REGISTRY-}crproxy
+    build:
+      context: ../src/Projects/CRProxy/
+      dockerfile: Dockerfile

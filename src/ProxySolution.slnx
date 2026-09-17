@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../deploy/docker-compose.dcproj">
+    <Build />
+  </Project>
+  <Project Path="Projects/CRProxy/CRProxy.csproj" Id="e57f36d2-f516-4153-a6f2-575f64a8ecce" />
+</Solution>
