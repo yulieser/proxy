@@ -26,10 +26,24 @@ namespace CRProxy.Infrastructure.Services
         {
             get
             {
-                if(Encoding != null)
+                if (Encoding != null)
                 {
-                    return System.Text.Encoding.GetEncoding(Encoding);
+                    try
+                    {
+                        return System.Text.Encoding.GetEncoding(Encoding);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Fallback to ASCII if the configured encoding is not supported
+                        return System.Text.Encoding.ASCII;
+                    }
+                    catch (Exception)
+                    {
+                        // For any other unexpected error, fallback to ASCII
+                        return System.Text.Encoding.ASCII;
+                    }
                 }
+
                 return System.Text.Encoding.ASCII;
             }
         }

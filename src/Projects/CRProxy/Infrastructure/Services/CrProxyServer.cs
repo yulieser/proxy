@@ -11,11 +11,14 @@ namespace CRProxy.Infrastructure.Services
 {
     public class CrProxyServer : ICrProxyServer
     {
-        public CrProxyServer(IProxyConfiguration proxyConfiguration)
+        public CrProxyServer(IProxyConfiguration proxyConfiguration, IBackgroundTaskQueue backgroundTaskQueue,
+            Observability.ProxyMetrics metrics, ConnectionManager connectionManager)
         {
             ProxyConfiguration = proxyConfiguration;
+            _backgroundTaskQueue = backgroundTaskQueue;
             TcpServerListener = new TcpListener(IPAddress.Any, ProxyConfiguration.Port);
-            ConnectionManager = new ConnectionManager();
+            ConnectionManager = connectionManager;
+            _metrics = metrics;
             //Logger = null;
         }
 
@@ -23,6 +26,9 @@ namespace CRProxy.Infrastructure.Services
         //private MessageLogger? Logger { get; set; }
         private TcpListener TcpServerListener { get; }
         private ConnectionManager ConnectionManager { get; }
+
+        private readonly IBackgroundTaskQueue _backgroundTaskQueue;
+        private readonly Observability.ProxyMetrics _metrics;
 
         public async Task StartServerAsync(CancellationToken cancellationToken, IServiceProvider serviceProvider)
         {
@@ -39,7 +45,21 @@ namespace CRProxy.Infrastructure.Services
             while (!cancellationToken.IsCancellationRequested)
             {
                 TcpClient? client = await TcpServerListener.AcceptTcpClientAsync(cancellationToken);
-                await HandleClientAsync(client, cancellationToken);
+                _metrics?.IncrementActiveConnections();
+                try
+                {
+                    await _backgroundTaskQueue.QueueBackgroundWorkItemAsync(new(HandleClientAsync, cancellationToken, client));
+                    //await HandleClientAsync(client, cancellationToken);
+                }
+                catch (Exception)
+                {
+                    _metrics?.IncrementErrors();
+                    // swallow to keep server running; consider logging
+                }
+                finally
+                {
+                    _metrics?.DecrementActiveConnections();
+                }
             }
         }
 

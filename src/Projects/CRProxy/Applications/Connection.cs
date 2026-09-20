@@ -148,20 +148,96 @@ namespace CRProxy.Applications
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-
-            if (CurrentStream != null)
+            try
             {
-                CurrentStream.Socket.Shutdown(SocketShutdown.Both);
-                CurrentStream.Socket.Disconnect(false);
-                CurrentStream.Socket.Close();
-                CurrentStream.Socket.Dispose();
+                // Guard against possible socket exceptions during shutdown/close
+                var stream = _currentStream;
+                if (stream != null)
+                {
+                    try
+                    {
+                        var sock = stream.Socket;
+                        if (sock != null)
+                        {
+                            try
+                            {
+                                if (sock.Connected)
+                                {
+                                    sock.Shutdown(SocketShutdown.Both);
+                                }
+                            }
+                            catch
+                            {
+                                // ignore shutdown failures
+                            }
 
-                CurrentStream.Close();
-                CurrentStream.Dispose();
+                            try
+                            {
+                                // Disconnect may throw if socket state invalid
+                                sock.Disconnect(false);
+                            }
+                            catch
+                            {
+                                // ignore disconnect failures
+                            }
+
+                            try
+                            {
+                                sock.Close();
+                            }
+                            catch
+                            {
+                            }
+
+                            try
+                            {
+                                sock.Dispose();
+                            }
+                            catch
+                            {
+                            }
+                        }
+
+                        try
+                        {
+                            stream.Close();
+                        }
+                        catch
+                        {
+                        }
+
+                        try
+                        {
+                            stream.Dispose();
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    catch
+                    {
+                        // best effort dispose
+                    }
+                }
             }
+            finally
+            {
+                try
+                {
+                    Client.Close();
+                }
+                catch
+                {
+                }
 
-            Client.Close();
-            Client.Dispose();
+                try
+                {
+                    Client.Dispose();
+                }
+                catch
+                {
+                }
+            }
         }
     }
 }
