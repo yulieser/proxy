@@ -4,3 +4,5 @@ services:
     build:
       context: ../src/Projects/CRProxy/
       dockerfile: Dockerfile
+    ports:
+      - "5888:5888"
