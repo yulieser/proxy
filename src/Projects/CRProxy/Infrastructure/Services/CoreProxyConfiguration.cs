@@ -11,7 +11,7 @@ namespace CRProxy.Infrastructure.Services
             Timeout = 60000;
             Username= "admin";
             Password= "admin";
-            Encoding = "ASCII";
+            Encoding = "UTF-8";
             IsEnabled = false;
         }
 
@@ -35,16 +35,16 @@ namespace CRProxy.Infrastructure.Services
                     catch (ArgumentException)
                     {
                         // Fallback to ASCII if the configured encoding is not supported
-                        return System.Text.Encoding.ASCII;
+                        return System.Text.Encoding.UTF8;
                     }
                     catch (Exception)
                     {
                         // For any other unexpected error, fallback to ASCII
-                        return System.Text.Encoding.ASCII;
+                        return System.Text.Encoding.UTF8;
                     }
                 }
 
-                return System.Text.Encoding.ASCII;
+                return System.Text.Encoding.UTF8;
             }
         }
 
