@@ -1,5 +1,6 @@
 ﻿using CRProxy.Applications.Extensions;
 using System.Diagnostics;
+using System.Net;
 using System.Net.Sockets;
 
 namespace CRProxy.Applications
@@ -14,7 +15,7 @@ namespace CRProxy.Applications
             Client = client;
             Stopwatch = Stopwatch.StartNew();
             _currentStream = client.Connected ? client.GetStream() : null;
-            LimitInactiveTime = 5000;
+            LimitInactiveTime = 30000;
             TotalCycle = 4;
             _active = true;
         }
@@ -75,11 +76,14 @@ namespace CRProxy.Applications
             return SendEventTask;
         }
 
-        public async Task ConnectAsync(string url, int port)
+        public async Task ConnectAsync(string host, int port)
         {
             if (!Client.Connected)
             {
-                await Client.ConnectAsync(url, port);
+                IPHostEntry ipHostInfo = await Dns.GetHostEntryAsync(host);
+                //IPAddress ipAddress =  ipHostInfo.AddressList[0];
+                var ipAddress = ipHostInfo.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork);
+                await Client.ConnectAsync(ipAddress, port);
             }
         }
 
